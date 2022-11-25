@@ -7,28 +7,26 @@ require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
 
-// middlewares
+// MiddleWares
 app.use(cors());
 app.use(express.json());
 
-// const verifyJwt = (req, res, next) => {
-//   const authHeader = req.headers.authorization;
-//   console.log(authHeader);
-//   if (!authHeader) {
-//     return res.status(401).send({ message: "unauthorized access" });
-//   }
+const verifyJwt = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
 
-//   const token = authHeader.split(" ")[1];
-//   console.log(token);
+  const token = authHeader.split(" ")[1];
 
-//   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-//     if (err) {
-//       return res.status(403).send({ message: "Forbidden access" });
-//     }
-//     req.decoded = decoded;
-//     next();
-//   });
-// };
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).send({ message: "Forbidden access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
 
 // Database Connection
 const uri = process.env.DB_URI;
@@ -55,6 +53,19 @@ async function run() {
       const categoryId = req.params.category;
       const query = { category: categoryId };
       const result = await productsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.get("/bookings/my-bookings", verifyJwt, async (req, res) => {
+      const decoded = req.decoded;
+      if (decoded.email !== req.query.email) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+      const email = req.query.email;
+
+      const filter = { email: email };
+      const cursor = bookingsCollection.find(filter);
+      const result = await cursor.toArray();
       res.send(result);
     });
 
