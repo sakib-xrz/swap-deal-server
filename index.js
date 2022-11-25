@@ -49,9 +49,9 @@ async function run() {
       res.send(cursor);
     });
 
-    app.get("/products/:category", async (req, res) => {
-      const categoryId = req.params.category;
-      const query = { category: categoryId };
+    app.get("/products/:brand", async (req, res) => {
+      const brand = req.params.brand;
+      const query = { brand: brand };
       const result = await productsCollection.find(query).toArray();
       res.send(result);
     });
