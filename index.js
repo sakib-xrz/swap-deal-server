@@ -56,30 +56,6 @@ async function run() {
       const result = await productsCollection.find(query).toArray();
       res.send(result);
     });
-
-    // save user email and verify JWT
-    app.put("/user/:email", async (req, res) => {
-      const email = req.params.email;
-      const user = req.body;
-      const filter = { email: email };
-      const options = { upsert: true };
-      const updateDoc = {
-        $set: user,
-      };
-      const result = await usersCollection.updateOne(
-        filter,
-        updateDoc,
-        options
-      );
-      console.log(result);
-
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "1d",
-      });
-      console.log(token);
-
-      res.send({ result, token });
-    });
   } finally {
   }
 }
