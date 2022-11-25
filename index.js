@@ -11,24 +11,24 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-const verifyJwt = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  console.log(authHeader);
-  if (!authHeader) {
-    return res.status(401).send({ message: "unauthorized access" });
-  }
+// const verifyJwt = (req, res, next) => {
+//   const authHeader = req.headers.authorization;
+//   console.log(authHeader);
+//   if (!authHeader) {
+//     return res.status(401).send({ message: "unauthorized access" });
+//   }
 
-  const token = authHeader.split(" ")[1];
-  console.log(token);
+//   const token = authHeader.split(" ")[1];
+//   console.log(token);
 
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(403).send({ message: "Forbidden access" });
-    }
-    req.decoded = decoded;
-    next();
-  });
-};
+//   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+//     if (err) {
+//       return res.status(403).send({ message: "Forbidden access" });
+//     }
+//     req.decoded = decoded;
+//     next();
+//   });
+// };
 
 // Database Connection
 const uri = process.env.DB_URI;
@@ -43,6 +43,7 @@ async function run() {
     const usersCollection = client.db("swap-dealDB").collection("users");
     const brandsCollection = client.db("swap-dealDB").collection("brands");
     const productsCollection = client.db("swap-dealDB").collection("products");
+    const bookingsCollection = client.db("swap-dealDB").collection("bookings");
 
     app.get("/brands", async (req, res) => {
       const query = {};
@@ -54,6 +55,20 @@ async function run() {
       const categoryId = req.params.category;
       const query = { category: categoryId };
       const result = await productsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1d",
+      });
+      res.json(token);
+    });
+
+    app.post("/bookings", async (req, res) => {
+      const booking = req.body;
+      const result = await bookingsCollection.insertOne(booking);
       res.send(result);
     });
 
@@ -70,16 +85,8 @@ async function run() {
         updateDoc,
         options
       );
-      console.log(result);
-
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "1d",
-      });
-      console.log(token);
-
-      res.send({ result, token });
+      res.send(result);
     });
-    
   } finally {
   }
 }
