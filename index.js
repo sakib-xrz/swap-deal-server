@@ -69,17 +69,41 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/jwt", (req, res) => {
-      const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "5h",
-      });
-      res.json(token);
+    app.get("/products", verifyJwt, async (req, res) => {
+      const decoded = req.decoded;
+      if (decoded.email !== req.query.email) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+      const email = req.query.email;
+
+      const filter = { email: email };
+      const cursor = productsCollection.find(filter);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    app.get("/jwt", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      if (user) {
+        const token = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, {
+          expiresIn: "5h",
+        });
+        return res.send({ accessToken: token });
+      }
+      res.status(401).send({ accessToken: "" });
     });
 
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
       const result = await bookingsCollection.insertOne(booking);
+      res.send(result);
+    });
+
+    app.post("/products", async (req, res) => {
+      const product = req.body;
+      const result = await productsCollection.insertOne(product);
       res.send(result);
     });
 
