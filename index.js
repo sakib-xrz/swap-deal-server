@@ -149,6 +149,7 @@ async function run() {
         filter,
         updatedDoc
       );
+      console.log(updatedResult);
       res.send(result);
     });
 
