@@ -139,7 +139,7 @@ async function run() {
       const result = await paymentsCollection.insertOne(payment);
       const id = payment.bookingId;
       const filter = { _id: ObjectId(id) };
-      const fil = { productName: payment.productName };
+      const fil = { name: payment.productName };
       const updatedDocument = { $set: { paid: true } };
       const up = await productsCollection.updateOne(fil, updatedDocument);
       const updatedDoc = {
@@ -148,6 +148,19 @@ async function run() {
       const updatedResult = await bookingsCollection.updateOne(
         filter,
         updatedDoc
+      );
+      res.send(result);
+    });
+
+    app.put("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updatedDoc = { $set: { isAdvertise: true } };
+      const result = await productsCollection.updateOne(
+        filter,
+        updatedDoc,
+        options
       );
       res.send(result);
     });
@@ -165,6 +178,13 @@ async function run() {
         updateDoc,
         options
       );
+      res.send(result);
+    });
+
+    app.delete("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await productsCollection.deleteOne(query);
       res.send(result);
     });
   } finally {
