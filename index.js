@@ -93,17 +93,39 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/jwt", async (req, res) => {
-      const email = req.query.email;
-      const query = { email: email };
+    app.get("/products/advertised", async () => {
+      const query = { isAdvertise: true };
+      const cursor = await productsCollection.find(query).toArray();
+      res.send(cursor);
+    });
+
+    app.get("/users/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
       const user = await usersCollection.findOne(query);
-      if (user) {
-        const token = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, {
-          expiresIn: "5h",
-        });
-        return res.send({ accessToken: token });
-      }
-      res.status(401).send({ accessToken: "" });
+      res.send({ isAdmin: user?.role === "admin" });
+    });
+
+    app.get("/users/buyer/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const user = await usersCollection.findOne(query);
+      res.send({ isBuyer: user?.accountType === "Buyer" });
+    });
+
+    app.get("/users/seller/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const user = await usersCollection.findOne(query);
+      res.send({ isSeller: user?.accountType === "Seller" });
+    });
+
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "5h",
+      });
+      res.send({ accessToken: token });
     });
 
     app.post("/bookings", async (req, res) => {
