@@ -3,6 +3,9 @@ const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const stripe = require("stripe")(
+  "sk_test_51M8hGnEMwpOnQHU879COAwBl8BBLmwYJgid4EYgcH1xyUT8xT03oBjUg5hb6WdpoB7gvi741rev5eSRfdDfU596z00PanIowBt"
+);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -42,6 +45,7 @@ async function run() {
     const brandsCollection = client.db("swap-dealDB").collection("brands");
     const productsCollection = client.db("swap-dealDB").collection("products");
     const bookingsCollection = client.db("swap-dealDB").collection("bookings");
+    const paymentsCollection = client.db("swap-dealDB").collection("payments");
 
     app.get("/brands", async (req, res) => {
       const query = {};
@@ -66,6 +70,13 @@ async function run() {
       const filter = { email: email };
       const cursor = bookingsCollection.find(filter);
       const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    app.get("/bookings/my-bookings/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await bookingsCollection.findOne(query);
       res.send(result);
     });
 
@@ -96,14 +107,48 @@ async function run() {
     });
 
     app.post("/bookings", async (req, res) => {
-      const booking = req.body;
-      const result = await bookingsCollection.insertOne(booking);
+      const product = req.body;
+      const result = await bookingsCollection.insertOne(product);
       res.send(result);
     });
 
     app.post("/products", async (req, res) => {
       const product = req.body;
       const result = await productsCollection.insertOne(product);
+      res.send(result);
+    });
+
+    app.post("/create-payment-intent", async (req, res) => {
+      const booking = req.body;
+
+      const price = booking.productPrice;
+      const amount = price * 100;
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        currency: "usd",
+        amount: amount,
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    app.post("/payments", verifyJwt, async (req, res) => {
+      const payment = req.body;
+      const result = await paymentsCollection.insertOne(payment);
+      const id = payment.bookingId;
+      const filter = { _id: ObjectId(id) };
+      const fil = { productName: payment.productName };
+      const updatedDocument = { $set: { paid: true } };
+      const up = await productsCollection.updateOne(fil, updatedDocument);
+      const updatedDoc = {
+        $set: { paid: true, transactionId: payment.transactionId },
+      };
+      const updatedResult = await bookingsCollection.updateOne(
+        filter,
+        updatedDoc
+      );
       res.send(result);
     });
 
