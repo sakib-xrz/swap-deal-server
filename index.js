@@ -93,10 +93,11 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/products/advertised", async () => {
+    app.get("/products/advertised", async (req, res) => {
       const query = { isAdvertise: true };
-      const cursor = await productsCollection.find(query).toArray();
-      res.send(cursor);
+      const cursor = productsCollection.find(query);
+      const result = cursor.toArray();
+      res.send(result);
     });
 
     app.get("/users/admin/:email", async (req, res) => {
