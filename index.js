@@ -3,9 +3,7 @@ const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
-const stripe = require("stripe")(
-  "sk_test_51M8hGnEMwpOnQHU879COAwBl8BBLmwYJgid4EYgcH1xyUT8xT03oBjUg5hb6WdpoB7gvi741rev5eSRfdDfU596z00PanIowBt"
-);
+const stripe = require("stripe")(process.env.STRIPE_API);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -44,6 +42,7 @@ async function run() {
     const usersCollection = client.db("swap-dealDB").collection("users");
     const brandsCollection = client.db("swap-dealDB").collection("brands");
     const productsCollection = client.db("swap-dealDB").collection("products");
+    const reportedCollection = client.db("swap-dealDB").collection("reported");
     const bookingsCollection = client.db("swap-dealDB").collection("bookings");
     const paymentsCollection = client.db("swap-dealDB").collection("payments");
 
@@ -135,6 +134,13 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/reported-items" , async (req, res) => {
+      const query = { };
+      const cursor = reportedCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
     app.post("/jwt", async (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
@@ -189,6 +195,12 @@ async function run() {
       console.log(updatedResult);
       res.send(result);
     });
+
+    app.post("/reported-items", async (req, res) => {
+      const product = req.body;
+      const result = await reportedCollection.insertOne(product);
+      res.send(result);
+    })
 
     app.put("/products/:id", async (req, res) => {
       const id = req.params.id;
@@ -252,6 +264,14 @@ async function run() {
       const result = await usersCollection.deleteOne(query);
       res.send(result);
     });
+
+    app.delete("/reported-items/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await reportedCollection.deleteOne(query);
+      res.send(result);
+    });
+
   } finally {
   }
 }
