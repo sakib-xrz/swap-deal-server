@@ -134,12 +134,12 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/reported-items" , async (req, res) => {
-      const query = { };
-      const cursor = reportedCollection.find(query);
-      const result = await cursor.toArray();
-      res.send(result);
-    });
+    // app.get("/reported-items", async (req, res) => {
+    //   const query = {};
+    //   const cursor = reportedCollection.find(query);
+    //   const result = await cursor.toArray();
+    //   res.send(result);
+    // });
 
     app.post("/jwt", async (req, res) => {
       const user = req.body;
@@ -200,7 +200,7 @@ async function run() {
       const product = req.body;
       const result = await reportedCollection.insertOne(product);
       res.send(result);
-    })
+    });
 
     app.put("/products/:id", async (req, res) => {
       const id = req.params.id;
@@ -265,13 +265,12 @@ async function run() {
       res.send(result);
     });
 
-    app.delete("/reported-items/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: ObjectId(id) };
-      const result = await reportedCollection.deleteOne(query);
-      res.send(result);
-    });
-
+    // app.delete("/reported-items/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const query = { _id: ObjectId(id) };
+    //   const result = await reportedCollection.deleteOne(query);
+    //   res.send(result);
+    // });
   } finally {
   }
 }
